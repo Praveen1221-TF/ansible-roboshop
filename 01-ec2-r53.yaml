@@ -6,11 +6,11 @@
     sg_id: sg-08223f8b4a8582c4a
     ZONE_ID: "Z0525756Y7HMXRRYAT2T"
     DOMAIN_NAME: "practicedev.shop"
-    instance:
-    - mongodb
-    - mysql
-    - rabbitmq  
-    - redis
+    # instance:
+    # - mongodb
+    # - mysql
+    # - rabbitmq  
+    # - redis
   tasks:
   - name: create ec2 instance
     amazon.aws.ec2_instance:
