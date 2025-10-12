@@ -15,8 +15,8 @@
 
   - name: remove html directory
     ansible.builtin.file:
-      state: abesent
       path: /usr/share/nginx/html 
+      state: abesent
 
   - name: crate html directory
     ansible.builtin.file:
