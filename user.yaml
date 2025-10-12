@@ -1,0 +1,86 @@
+- name: user setup
+  hosts: user
+  become: yes
+  tasks:
+  - name: disable default nodejs
+    ansible.builtin.command: dnf module disable nodejs -y
+
+  - name: enable nodejs 20
+    ansible.builtin.command: dnf module enable nodejs:20 -y
+
+  - name: install nodejs
+    ansible.builtin.package:
+      name: nodejs
+      state: present
+
+  - name: create ansible roboshop user
+    ansible.builtin.user:
+      name: roboshop
+      comment: robosgop user
+      system: true
+      shell: /sbin/nologin
+      home: /app
+
+  - name: create app directory
+    ansible.builtin.file:
+     state: directory
+     path: /app
+
+  - name: download user application
+    ansible.builtin.get_url:
+      url: https://roboshop-artifacts.s3.amazonaws.com/user-v3.zip 
+      dest: /tmp/user.zip
+
+  - name: unzipping user
+    ansible.builtin.unarchive:
+      src: /tmp/user.zip
+      dest: /app
+      remote_src: yes
+
+  - name: install dependencies
+    community.general.npm:
+      path: /app  
+
+  - name: copy user service
+    ansible.builtin.copy:
+      src: user.service
+      dest: /etc/systemd/system/user.service
+
+  - name: copy mongo repo
+    ansible.builtin.copy:
+      src: mongo.repo
+      dest: /etc/yum.repos.d/mongo.repo
+
+  - name: install mongodb client
+    ansible.builtin.package:
+      name: mongodb-mongosh
+      state: present
+
+  - name: connect to mongodb user
+    ansible.builtin.command: mongosh mongodb.practicedev.shop --quiet --eval "db.getMongo().getDBNames().indexOf('user')"
+    register: user_output
+
+  # - name: evaluate user database
+  #   community.mongodb.mongodb_shell:
+  #     login_host: mongodb.practicedev.shop
+  #     eval: db.getMongo().getDBNames().indexOf('user')
+  #   register: user_output
+
+  # - name: print user output
+  #   ansible.builtin.debug:
+  #     msg: "{{ user_output }}"
+
+  - name: load products in user
+    ansible.builtin.shell: mongosh --host mongodb.practicedev.shop </app/db/master-data.js
+    when: user_output.stdout | int < 0
+
+
+  - name: daemon reload enable and start
+    ansible.builtin.systemd_service:
+      name: user
+      enabled: true
+      state: started
+      daemon_reload: true
+
+
+
