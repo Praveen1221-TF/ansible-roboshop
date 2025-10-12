@@ -14,7 +14,7 @@
       state: present
 
   - name: create roboshop system user
-    an0sible.builtin.user:
+    ansible.builtin.user:
       name: roboshop
       comment: RoboShop System user
       system: true
