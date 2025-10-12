@@ -46,19 +46,6 @@
       src: user.service
       dest: /etc/systemd/system/user.service
 
-  - name: copy mongo repo
-    ansible.builtin.copy:
-      src: mongo.repo
-      dest: /etc/yum.repos.d/mongo.repo
-
-  - name: install mongodb client
-    ansible.builtin.package:
-      name: mongodb-mongosh
-      state: present
-
-  - name: connect to mongodb user
-    ansible.builtin.command: mongosh mongodb.practicedev.shop --quiet --eval "db.getMongo().getDBNames().indexOf('user')"
-    register: user_output
 
   # - name: evaluate user database
   #   community.mongodb.mongodb_shell:
@@ -69,10 +56,6 @@
   # - name: print user output
   #   ansible.builtin.debug:
   #     msg: "{{ user_output }}"
-
-  - name: load products in user
-    ansible.builtin.shell: mongosh --host mongodb.practicedev.shop </app/db/master-data.js
-    when: user_output.stdout | int < 0
 
 
   - name: daemon reload enable and start
