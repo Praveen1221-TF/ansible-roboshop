@@ -60,6 +60,12 @@
     ansible.builtin.command: mongosh mongodb.practicedev.shop --quiet --eval "db.getMongo().getDBNames().indexOf('catalogue')"
     register: catalogue_output
 
+  - name: evaluate catalogue database
+    community.mongodb.mongodb_shell:
+      login_host: mongodb.practicedev.shop
+      eval: db.getMongo().getDBNames().indexOf('catalogue')
+    register: catalogue_output
+
   - name: print catalogue output
     ansible.builtin.debug:
       msg: "{{ catalogue_output }}"
