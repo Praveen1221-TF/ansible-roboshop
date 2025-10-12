@@ -1,4 +1,4 @@
-- name: connfigure shipping server  
+- name: configure shipping server
   hosts: shipping
   become: yes
   tasks:
@@ -10,42 +10,55 @@
     - maven
     - mysql
 
-  - name: create ansible roboshop user
+  - name: install mysql python libraries
+    ansible.builtin.pip:
+      executable: pip3.9
+      name: "{{ item }}"
+    loop:
+    - cryptography
+    - PyMySQL
+
+  - name: create roboshop system user
     ansible.builtin.user:
       name: roboshop
-      comment: robosgop user
+      comment: RoboShop System user
       system: true
       shell: /sbin/nologin
       home: /app
 
+  - name: remove app directory
+    ansible.builtin.file:
+      path: /app
+      state: absent
+
   - name: create app directory
     ansible.builtin.file:
-     state: directory
-     path: /app
+      state: directory
+      path: /app
 
   - name: Delete shipping file
     ansible.builtin.file:
       path: /tmp/shipping.zip
       state: absent
 
-  - name: download catalogue application
+  - name: download shipping application
     ansible.builtin.get_url:
-      url: https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip 
+      url: https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip
       dest: /tmp/shipping.zip
 
-  - name: unzipping catalogue
+  - name: extract shipping application
     ansible.builtin.unarchive:
-      src: /tmp/shippng.zip
+      src: /tmp/shipping.zip
       dest: /app
-      remote_src: yes 
+      remote_src: yes
 
   - name: install dependencies
-    ansible.builtin.command: mvn clean package 
+    ansible.builtin.command: mvn clean package
     args:
       chdir: /app
 
   - name: move jar file
-    ansible.builtin.command: mv target/shipping-1.0.jar shipping.jar 
+    ansible.builtin.command: mv target/shipping-1.0.jar shipping.jar
     args:
       chdir: /app
 
@@ -54,12 +67,11 @@
       src: shipping.service
       dest: /etc/systemd/system/shipping.service
 
-
   - name: import shipping data into mysql
     community.mysql.mysql_db:
       state: import
       name: all
-      login_host: mmysql.practicedev.shop
+      login_host: mysql.practicedev.shop
       login_user: root
       login_password: RoboShop@1
       target: "{{ item }}"
@@ -70,7 +82,9 @@
 
   - name: daemon reload enable and start
     ansible.builtin.systemd_service:
-      name: user
+      name: shipping
       enabled: true
       state: started
       daemon_reload: true
+
+  
